@@ -1,1 +1,1 @@
-OpenWeatherMap-Cache
+# Open Weather Map Caching Server
