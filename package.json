@@ -1,0 +1,23 @@
+{
+  "name": "openweathermap-cache",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "tsc": "tsc",
+    "dev": "ts-node-dev --respawn --transpileOnly ./app/app.ts",
+    "prod": "tsc && node ./build/app.js"
+  },
+  "author": "Iain Moncrief",
+  "license": "ISC",
+  "dependencies": {
+    "@types/express": "^4.16.1",
+    "@types/node-fetch": "^2.3.4",
+    "async-threading": "^1.0.2",
+    "express": "^4.17.0",
+    "fetch": "^1.1.0",
+    "node-fetch": "^2.6.0",
+    "ts-node-dev": "^1.0.0-pre.39",
+    "typescript": "^3.4.5"
+  }
+}
