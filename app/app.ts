@@ -1,18 +1,14 @@
 import Location from './Location'
 import CacheManager from './CacheManager';
 
-// lib/app.ts
 import express = require('express');
 
-// Create a new express application instance
 const app: express.Application = express();
 
 app.get('/', function (req, res) {
-  res.send('Hello World!');
-});
-
-app.listen(3000, function () {
-  console.log('Example app listening on port 3000!');
+    res.json({
+        ping : 'pong'
+    });
 });
 
 app.get('/weather/', function (req, res) {
@@ -22,4 +18,12 @@ app.get('/weather/', function (req, res) {
     CacheManager.response(userLocation).then( response => {
         res.json(response);
     });
+
 });
+
+app.listen(3000, function () {
+    CacheManager.init();
+    console.log('Open Weather Map Cache listening on port 3000!');
+});
+
+
