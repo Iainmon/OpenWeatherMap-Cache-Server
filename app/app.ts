@@ -16,6 +16,9 @@ app.get('/weather/', function (req, res) {
     let userLocation = new Location(parseFloat(req.query.longitude), parseFloat(req.query.latitude));
 
     CacheManager.response(userLocation).then( response => {
+        if (!!response.error) {
+            res.status(500);
+        }
         res.json(response);
     });
 
