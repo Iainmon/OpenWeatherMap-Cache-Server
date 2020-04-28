@@ -1,12 +1,13 @@
 import Location from './Location';
-import { WeatherRequest, WeatherRequestOptions} from './WeatherRequest';
+import { WeatherRequest, WeatherForecastRequest, WeatherRequestOptions} from './WeatherRequest';
 import * as keys from './keys.json';
 import Key from './Key';
 import Thread from 'async-threading';
 
 export default class CacheManager {
 
-    private static requests = Array<WeatherRequest>();
+    private static weatherRequests = Array<WeatherRequest>();
+    private static forecastRequests = Array<WeatherForecastRequest>();
     private static requestValidator: Thread;
 
     public static acceptableRaidius = 0.19; // degree
@@ -16,9 +17,15 @@ export default class CacheManager {
             WeatherRequest.keys.push( new Key(key) );
         });
         CacheManager.requestValidator = new Thread( () => {
-            for (let i = 0; i < CacheManager.requests.length; i++) {
-                if (CacheManager.requests[i].hasExpired()) {
-                    CacheManager.requests.splice(i, 1);
+            for (let i = 0; i < CacheManager.weatherRequests.length; i++) {
+                if (CacheManager.weatherRequests[i].hasExpired()) {
+                    CacheManager.weatherRequests.splice(i, 1);
+                    i--;
+                }
+            }
+            for (let i = 0; i < CacheManager.forecastRequests.length; i++) {
+                if (CacheManager.forecastRequests[i].hasExpired()) {
+                    CacheManager.forecastRequests.splice(i, 1);
                     i--;
                 }
             }
@@ -29,19 +36,19 @@ export default class CacheManager {
         return !(isNaN(location.longitude) || isNaN(location.latitude));
     }
 
-    private static newRequest(location: Location) {
+    private static newWeatherRequest(location: Location) {
         let newRequestOptions = {
             location : location,
         } as WeatherRequestOptions;
 
         let newWeatherRequest = new WeatherRequest(newRequestOptions);
         
-        CacheManager.requests.push(newWeatherRequest);
+        CacheManager.weatherRequests.push(newWeatherRequest);
 
-        return newWeatherRequest.getData();
+        return newWeatherRequest.getWeatherData();
     }
 
-    public static async response(location: Location): Promise<any> {
+    public static async weatherResponse(location: Location): Promise<any> {
         
         if (!CacheManager.validateLocation(location)) {
             return {
@@ -54,13 +61,13 @@ export default class CacheManager {
             }
         }
 
-        if (CacheManager.requests.length < 1) {
-            return await CacheManager.newRequest(location);
+        if (CacheManager.weatherRequests.length < 1) {
+            return await CacheManager.newWeatherRequest(location);
         }
 
         let distances = Array<Number>();
 
-        CacheManager.requests.forEach( request => {
+        CacheManager.weatherRequests.forEach( request => {
             distances.push(request.location.getDistance(location));
         });
 
@@ -75,9 +82,61 @@ export default class CacheManager {
         }
 
         if (lowestNumber <= CacheManager.acceptableRaidius) {
-            return CacheManager.requests[lowestIndex].getData(); // Serves the cached response.
+            return CacheManager.weatherRequests[lowestIndex].getWeatherData(); // Serves the cached response.
         } else {
-            return await CacheManager.newRequest(location); // Creates a new response, and waits for it to resolve.
+            return await CacheManager.newWeatherRequest(location); // Creates a new response, and waits for it to resolve.
+        }
+    }
+
+    private static newForecastRequest(location: Location) {
+        let newRequestOptions = {
+            location : location,
+        } as WeatherRequestOptions;
+
+        let newForecastRequest = new WeatherForecastRequest(newRequestOptions);
+        
+        CacheManager.forecastRequests.push(newForecastRequest);
+
+        return newForecastRequest.getForecastData();
+    }
+
+    public static async forecastResponse(location: Location): Promise<any> {
+        
+        if (!CacheManager.validateLocation(location)) {
+            return {
+                error : 400,
+                message : 'Location not valid.',
+                request : {
+                    longitude : location.longitude,
+                    latitude : location.latitude
+                }
+            }
+        }
+
+        if (CacheManager.forecastRequests.length < 1) {
+            return await CacheManager.newForecastRequest(location);
+        }
+
+        let distances = Array<Number>();
+
+        CacheManager.forecastRequests.forEach( request => {
+            distances.push(request.location.getDistance(location));
+        });
+
+        let lowestNumber = distances[0];
+        let lowestIndex = 0;
+
+        for (let i = 0; i < distances.length; i++) {
+            if (distances[i] < lowestNumber) {
+                lowestNumber = distances[i];
+                lowestIndex = i;
+            }
+        }
+
+        if (lowestNumber <= CacheManager.acceptableRaidius) {
+            return CacheManager.forecastRequests[lowestIndex].getForecastData(); // Serves the cached response.
+        } else {
+            return await CacheManager.newForecastRequest(location); // Creates a new response, and waits for it to resolve.
         }
     }
 }
