@@ -15,6 +15,7 @@ export default class CacheManager {
     public static init(): void {
         keys['keys'].forEach(key => {
             WeatherRequest.keys.push( new Key(key) );
+            WeatherForecastRequest.keys.push( new Key(key) );
         });
         CacheManager.requestValidator = new Thread( () => {
             for (let i = 0; i < CacheManager.weatherRequests.length; i++) {
